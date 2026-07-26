@@ -1,5 +1,5 @@
 /*
-  Project: WhiteRabbit Bluetooth/WiFi Jammer
+  Project: WhiteRabbit Bluetooth Jammer
   Creator: x0jacob0x
 
   Special thanks to the RF-Clown project
@@ -50,9 +50,7 @@ int WiFi_channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
 Adafruit_NeoPixel rgb(NUM_LEDS, RGB_LED_PIN, NEO_GRB + NEO_KHZ800);
 
-void configureRadio(RF24 &radio, int channel, SPIClass *spi);
-void test();
-void test1();
+bool configureRadio(RF24 &radio, int channel, SPIClass *spi);
 
 void setup() {
     Serial.begin(115200);
@@ -61,10 +59,45 @@ void setup() {
     pinMode(BOOT_BUTTON, INPUT_PULLUP);
 
     rgb.begin();
-    rgb.setBrightness(50);
-    rgb.setPixelColor(0, rgb.Color(255, 255, 255));  // waiting = white
-    rgb.show();
+    rgb.setBrightness(64);
 
+    esp_wifi_disconnect();
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    esp_bt_controller_deinit();
+
+    spiFSPI = new SPIClass(FSPI);
+    spiFSPI->begin(SCK_PIN, MISO_PIN, MOSI_PIN);
+
+    bool radio1OK = configureRadio(
+        radio1,
+        bluetooth_channels[0],
+        spiFSPI
+    );
+
+    bool radio2OK = configureRadio(
+        radio2,
+        bluetooth_channels[0],
+        spiFSPI
+    );
+
+    if (radio1OK && radio2OK) {
+        // Both radios passed: green
+        rgb.setPixelColor(0, rgb.Color(0, 255, 0));
+        rgb.show();
+    } else {
+        // One or both radios failed: flashing red
+        while (true) {
+            rgb.setPixelColor(0, rgb.Color(255, 0, 0));
+            rgb.show();
+            delay(500);
+
+            rgb.setPixelColor(0, rgb.Color(0, 0, 0));
+            rgb.show();
+            delay(500);
+        }
+    }
+    
     while (digitalRead(BOOT_BUTTON) == HIGH) {
         delay(10);
     }
@@ -72,36 +105,25 @@ void setup() {
     while (digitalRead(BOOT_BUTTON) == LOW) {
         delay(10);
     }
-
-    wifiMode = false;
     lastButtonState = HIGH;
-    lastPressTime = millis();
-
-    rgb.setPixelColor(0, rgb.Color(0, 0, 255));  // Bluetooth/BLE = blue
+    lastPressTime = millis() - debounceDelay;
+    rgb.setPixelColor(0, rgb.Color(0, 0, 255));
     rgb.show();
-
-    esp_bt_controller_deinit();
-    esp_wifi_stop();
-    esp_wifi_deinit();
-    esp_wifi_disconnect();
-
-    spiFSPI = new SPIClass(FSPI);
-    spiFSPI->begin(SCK_PIN, MISO_PIN, MOSI_PIN);
-
-    configureRadio(radio1, bluetooth_channels[0], spiFSPI);
-    configureRadio(radio2, bluetooth_channels[0], spiFSPI);
 }
 
-void configureRadio(RF24 &radio, int channel, SPIClass *spi) {
-    if (radio.begin(spi)) {
-        radio.setAutoAck(false);
-        radio.stopListening();
-        radio.setRetries(0, 0);
-        radio.setPALevel(RF24_PA_MAX, true);
-        radio.setDataRate(RF24_2MBPS);
-        radio.setCRCLength(RF24_CRC_DISABLED);
-        radio.startConstCarrier(RF24_PA_HIGH, channel);
+bool configureRadio(RF24 &radio, int channel, SPIClass *spi) {
+    if (!radio.begin(spi)) {
+        return false;
     }
+
+    radio.setAutoAck(false);
+    radio.stopListening();
+    radio.setRetries(0, 0);
+    radio.setPALevel(RF24_PA_MAX, true);
+    radio.setDataRate(RF24_2MBPS);
+    radio.setCRCLength(RF24_CRC_DISABLED);
+    radio.startConstCarrier(RF24_PA_MAX, channel);
+    return true;
 }
 
 void loop() {
@@ -132,17 +154,25 @@ void loop() {
 }
 
 void jamWiFi() {
-    int randomIndex = random(0, sizeof(WiFi_channels) / sizeof(WiFi_channels[0]));
-    int channel = WiFi_channels[randomIndex];
+    int count = sizeof(WiFi_channels) / sizeof(WiFi_channels[0]);
+    int index1 = random(0, count);
+    int index2;
+        do {
+            index2 = random(0, count);
+        } while (index2 == index1);
 
-    radio1.setChannel(channel);
-    radio2.setChannel(channel);
+    radio1.setChannel(WiFi_channels[index1]);
+    radio2.setChannel(WiFi_channels[index2]);
 }
 
 void jamBluetooth() {
-    int randomIndex = random(0, sizeof(bluetooth_channels) / sizeof(bluetooth_channels[0]));
-    int channel = bluetooth_channels[randomIndex];
+    int count = sizeof(bluetooth_channels) / sizeof(bluetooth_channels[0]);
+    int index1 = random(0, count);
+    int index2;
+        do {
+            index2 = random(0, count);
+        } while (index2 == index1);
 
-    radio1.setChannel(channel);
-    radio2.setChannel(channel);
+    radio1.setChannel(bluetooth_channels[index1]);
+    radio2.setChannel(bluetooth_channels[index2]);
 }
