@@ -156,13 +156,9 @@ void loop() {
 void jamWiFi() {
     int count = sizeof(WiFi_channels) / sizeof(WiFi_channels[0]);
     int index1 = random(0, count);
-    int index2;
-        do {
-            index2 = random(0, count);
-        } while (index2 == index1);
 
     radio1.setChannel(WiFi_channels[index1]);
-    radio2.setChannel(WiFi_channels[index2]);
+    radio2.setChannel(WiFi_channels[index1]);
 }
 
 void jamBluetooth() {
