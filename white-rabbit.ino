@@ -42,8 +42,42 @@ SPIClass *spiFSPI = nullptr;
 RF24 radio1(CE1_PIN, CSN1_PIN, SPI_SPEED);
 RF24 radio2(CE2_PIN, CSN2_PIN, SPI_SPEED);
 
-const byte bluetooth_channels[] = {32, 34, 46, 48, 50, 52, 0, 1, 2, 4, 6, 8, 22, 24, 26, 28, 30, 74, 76, 78, 80};
-const byte WiFi_channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+// 2.4 GHz Wi-Fi channel centers, US channels 1–11 (1,6,11 don't overlap)
+const byte WiFi_channels[] = {
+    12,  // Wi-Fi 1  = 2412 MHz
+    17,  // Wi-Fi 2  = 2417 MHz
+    22,  // Wi-Fi 3  = 2422 MHz
+    27,  // Wi-Fi 4  = 2427 MHz
+    32,  // Wi-Fi 5  = 2432 MHz
+    37,  // Wi-Fi 6  = 2437 MHz
+    42,  // Wi-Fi 7  = 2442 MHz
+    47,  // Wi-Fi 8  = 2447 MHz
+    52,  // Wi-Fi 9  = 2452 MHz
+    57,  // Wi-Fi 10 = 2457 MHz
+    62   // Wi-Fi 11 = 2462 MHz
+};
+
+const byte bluetooth_channels[] = {
+    32,  // 2432 MHz — BLE data channel 13
+    34,  // 2434 MHz — BLE data channel 14
+    46,  // 2446 MHz — BLE data channel 20
+    48,  // 2448 MHz — BLE data channel 21
+    50,  // 2450 MHz — BLE data channel 22
+    52,  // 2452 MHz — BLE data channel 23
+     2,  // 2402 MHz — BLE advertising channel 37
+     4,  // 2404 MHz — BLE data channel 0
+     6,  // 2406 MHz — BLE data channel 1
+     8,  // 2408 MHz — BLE data channel 2
+    22,  // 2422 MHz — BLE data channel 9
+    24,  // 2424 MHz — BLE data channel 10
+    26,  // 2426 MHz — BLE advertising channel 38
+    28,  // 2428 MHz — BLE data channel 11
+    30,  // 2430 MHz — BLE data channel 12
+    74,  // 2474 MHz — BLE data channel 34
+    76,  // 2476 MHz — BLE data channel 35
+    78,  // 2478 MHz — BLE data channel 36
+    80   // 2480 MHz — BLE advertising channel 39
+};
 
 #define RGB_LED_PIN 8
 #define NUM_LEDS 1
