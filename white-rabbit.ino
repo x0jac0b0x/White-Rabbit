@@ -1,5 +1,5 @@
 /*
-  Project: WhiteRabbit Bluetooth Jammer
+  Project: WhiteRabbit 2.4ghz (wifi/bluetooth) Jammer
   Creator: x0jacob0x
 
   Special thanks to the RF-Clown project
@@ -42,8 +42,8 @@ SPIClass *spiFSPI = nullptr;
 RF24 radio1(CE1_PIN, CSN1_PIN, SPI_SPEED);
 RF24 radio2(CE2_PIN, CSN2_PIN, SPI_SPEED);
 
-int bluetooth_channels[] = {32, 34, 46, 48, 50, 52, 0, 1, 2, 4, 6, 8, 22, 24, 26, 28, 30, 74, 76, 78, 80};
-int WiFi_channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+const byte bluetooth_channels[] = {32, 34, 46, 48, 50, 52, 0, 1, 2, 4, 6, 8, 22, 24, 26, 28, 30, 74, 76, 78, 80};
+const byte WiFi_channels[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
 
 #define RGB_LED_PIN 8
 #define NUM_LEDS 1
@@ -154,21 +154,28 @@ void loop() {
 }
 
 void jamWiFi() {
-    int count = sizeof(WiFi_channels) / sizeof(WiFi_channels[0]);
-    int index1 = random(0, count);
+    static int index = 0;
 
-    radio1.setChannel(WiFi_channels[index1]);
-    radio2.setChannel(WiFi_channels[index1]);
+    constexpr size_t count = 
+        sizeof (WiFi_channels) / sizeof(WiFi_channels[0]);
+
+    const size_t index2 = (index + count / 2) % count;
+
+    radio1.setChannel(WiFi_channels[index]);
+    radio2.setChannel(WiFi_channels[index2]);
+
+    index = (index + 1) % count;
 }
-
 void jamBluetooth() {
-    int count = sizeof(bluetooth_channels) / sizeof(bluetooth_channels[0]);
-    int index1 = random(0, count);
-    int index2;
-        do {
-            index2 = random(0, count);
-        } while (index2 == index1);
+    static size_t index = 0;
 
-    radio1.setChannel(bluetooth_channels[index1]);
+    constexpr size_t count =
+        sizeof(bluetooth_channels) / sizeof(bluetooth_channels[0]);
+
+    const size_t index2 = (index + count / 2) % count;
+
+    radio1.setChannel(bluetooth_channels[index]);
     radio2.setChannel(bluetooth_channels[index2]);
+
+    index = (index + 1) % count;
 }
